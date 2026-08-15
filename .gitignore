@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Python build
+build/
+dist/
+*.egg-info/
+
+# C/C++
+*.o
+*.obj
+*.so
+*.a
+*.out
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+Makefile
+
+# Rust
+target/
+Cargo.lock
+
+# Qt
+*.user
+*.user.*
+moc_*
+ui_*
+qrc_*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated reports
+reports/generated/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Secrets
+.env
+*.key
+*.pem
+
+# Runtime data
+*.pcap
+*.pcapng
