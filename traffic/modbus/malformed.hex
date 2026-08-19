@@ -1,0 +1,7 @@
+# VoltGuard Day 1 - Malformed Modbus/TCP Test Data
+
+# Too short to contain a complete Modbus/TCP request
+00 05 00 00 00
+
+# Incomplete request
+00 06 00 00 00 06 01 03

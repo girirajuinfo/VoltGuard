@@ -23,6 +23,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake-build-*/
 Makefile
+tests/cpp/test_modbus_parser
+src/cpp/packet_interceptor/voltguard_parser
 
 # Rust
 target/

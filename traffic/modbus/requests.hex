@@ -1,0 +1,53 @@
+# VoltGuard Day 1 - Local Modbus/TCP Test Traffic
+# These are raw hexadecimal Modbus/TCP request frames.
+# They are test data only and are NOT transmitted over the network.
+
+# --------------------------------------------------
+# 1. Read Holding Registers
+# Function Code: 03
+# Transaction ID: 0001
+# Protocol ID:   0000
+# Length:        0006
+# Unit ID:       01
+# Start Address: 0000
+# Quantity:      0002
+# --------------------------------------------------
+00 01 00 00 00 06 01 03 00 00 00 02
+
+# --------------------------------------------------
+# 2. Read Input Registers
+# Function Code: 04
+# Transaction ID: 0002
+# Protocol ID:   0000
+# Length:        0006
+# Unit ID:       01
+# Start Address: 0010
+# Quantity:      0003
+# --------------------------------------------------
+00 02 00 00 00 06 01 04 00 10 00 03
+
+# --------------------------------------------------
+# 3. Write Single Register
+# Function Code: 06
+# Transaction ID: 0003
+# Protocol ID:   0000
+# Length:        0006
+# Unit ID:       01
+# Register Address: 0020
+# Value:           0064
+# --------------------------------------------------
+00 03 00 00 00 06 01 06 00 20 00 64
+
+# --------------------------------------------------
+# 4. Write Multiple Registers
+# Function Code: 10
+# Transaction ID: 0004
+# Protocol ID:   0000
+# Length:        000B
+# Unit ID:       01
+# Start Address: 0030
+# Quantity:      0002
+# Byte Count:    04
+# Values:        0064 00C8
+# --------------------------------------------------
+00 04 00 00 00 0B 01 10 00 30 00 02 04 00 64 00 C8
