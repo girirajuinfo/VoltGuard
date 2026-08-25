@@ -19,7 +19,7 @@ struct ModbusRequest {
     std::uint16_t protocol_id = 0;
     std::uint16_t length = 0;
 
-    // Modbus fields
+    // Modbus protocol fields
     std::uint8_t unit_id = 0;
     std::uint8_t function_code = 0;
 
@@ -28,8 +28,13 @@ struct ModbusRequest {
     std::uint16_t quantity = 0;
     std::uint16_t value = 0;
 
-    // Indicates whether the request passed validation
+    // Parser state
     bool valid = false;
+
+    // Reset the request to a known initial state.
+    void reset() {
+        *this = ModbusRequest{};
+    }
 };
 
 } // namespace voltguard

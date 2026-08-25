@@ -72,7 +72,7 @@ bool ModbusParser::parse(
     std::uint16_t source_port,
     std::uint16_t destination_port
 ) {
-    request = ModbusRequest{};
+    request.reset();
 
     request.source_ip = source_ip;
     request.destination_ip = destination_ip;
