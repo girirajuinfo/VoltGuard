@@ -255,6 +255,87 @@ void test_error_message() {
 
     std::cout << "[PASS] Parser error messages verified\n";
 }
+
+void test_transaction_id() {
+    const std::vector<std::uint8_t> packet = {
+        0x12, 0x34, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x03, 0x00, 0x00, 0x00, 0x02
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(result);
+    assert(request.transaction_id == 0x1234);
+
+    std::cout << "[PASS] Transaction ID extracted correctly\n";
+}
+
+void test_unit_id() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x20, 0x00, 0x00, 0x00, 0x06,
+        0x05, 0x03, 0x00, 0x10, 0x00, 0x02
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(result);
+    assert(request.unit_id == 0x05);
+
+    std::cout << "[PASS] Unit ID extracted correctly\n";
+}
+
+void test_address_extraction() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x21, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x03, 0x12, 0x34, 0x00, 0x02
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(result);
+    assert(request.address == 0x1234);
+    assert(request.quantity == 2);
+
+    std::cout << "[PASS] Address and quantity extracted correctly\n";
+}
+
+void test_write_value_extraction() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x22, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x06, 0x00, 0x20, 0x00, 0x64
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(result);
+    assert(request.address == 0x0020);
+    assert(request.value == 0x0064);
+
+    std::cout << "[PASS] Write register address/value extracted correctly\n";
+}
+void test_incomplete_payload() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x23, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x03, 0x00
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(!result);
+    assert(!request.valid);
+
+    std::cout << "[PASS] Incomplete function payload rejected\n";
+}
 int main() {
     std::cout << "========================================\n";
     std::cout << " VoltGuard Modbus Parser Tests\n";
@@ -273,7 +354,11 @@ int main() {
     test_invalid_quantity();
     test_invalid_byte_count();
     test_error_message();
-    
+    test_transaction_id();
+    test_unit_id();
+    test_address_extraction();
+    test_write_value_extraction();
+    test_incomplete_payload();
 
     std::cout << "========================================\n";
     std::cout << " All parser tests passed.\n";
