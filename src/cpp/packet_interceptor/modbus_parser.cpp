@@ -6,20 +6,9 @@ namespace voltguard {
 
 namespace {
 
-// Minimum Modbus/TCP request size:
-//
-// MBAP Header = 7 bytes
-// PDU minimum = 5 bytes
-//
-// Total = 12 bytes
 constexpr std::size_t MIN_REQUEST_SIZE = 12;
 
 constexpr std::uint16_t MODBUS_PROTOCOL_ID = 0;
-
-constexpr std::uint8_t READ_HOLDING_REGISTERS = 0x03;
-constexpr std::uint8_t READ_INPUT_REGISTERS = 0x04;
-constexpr std::uint8_t WRITE_SINGLE_REGISTER = 0x06;
-constexpr std::uint8_t WRITE_MULTIPLE_REGISTERS = 0x10;
 
 } // namespace
 
@@ -31,6 +20,21 @@ std::uint16_t ModbusParser::read_uint16(
         (static_cast<std::uint16_t>(data[offset]) << 8) |
         static_cast<std::uint16_t>(data[offset + 1])
     );
+}
+
+bool ModbusParser::is_supported_function(
+    std::uint8_t function_code
+) {
+    switch (static_cast<ModbusFunction>(function_code)) {
+        case ModbusFunction::ReadHoldingRegisters:
+        case ModbusFunction::ReadInputRegisters:
+        case ModbusFunction::WriteSingleRegister:
+        case ModbusFunction::WriteMultipleRegisters:
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 bool ModbusParser::validate_common_fields(
@@ -48,12 +52,6 @@ bool ModbusParser::validate_common_fields(
 
     const std::uint16_t length = read_uint16(data, 4);
 
-    // The length field describes the bytes after the MBAP
-    // transaction ID, protocol ID, and length fields.
-    //
-    // A complete request must contain:
-    // 6 bytes of MBAP information after the transaction ID
-    // plus the PDU bytes represented by the length field.
     const std::size_t expected_size =
         6 + static_cast<std::size_t>(length);
 
@@ -90,10 +88,14 @@ bool ModbusParser::parse(
     request.unit_id = data[6];
     request.function_code = data[7];
 
-    switch (request.function_code) {
+    if (!is_supported_function(request.function_code)) {
+        return false;
+    }
 
-        case READ_HOLDING_REGISTERS:
-        case READ_INPUT_REGISTERS: {
+    switch (static_cast<ModbusFunction>(request.function_code)) {
+
+        case ModbusFunction::ReadHoldingRegisters:
+        case ModbusFunction::ReadInputRegisters: {
             request.address = read_uint16(data, 8);
             request.quantity = read_uint16(data, 10);
 
@@ -104,14 +106,14 @@ bool ModbusParser::parse(
             break;
         }
 
-        case WRITE_SINGLE_REGISTER: {
+        case ModbusFunction::WriteSingleRegister: {
             request.address = read_uint16(data, 8);
             request.value = read_uint16(data, 10);
 
             break;
         }
 
-        case WRITE_MULTIPLE_REGISTERS: {
+        case ModbusFunction::WriteMultipleRegisters: {
             request.address = read_uint16(data, 8);
             request.quantity = read_uint16(data, 10);
 
@@ -137,9 +139,6 @@ bool ModbusParser::parse(
 
             break;
         }
-
-        default:
-            return false;
     }
 
     request.valid = true;

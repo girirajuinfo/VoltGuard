@@ -9,6 +9,13 @@
 
 namespace voltguard {
 
+enum class ModbusFunction : std::uint8_t {
+    ReadHoldingRegisters = 0x03,
+    ReadInputRegisters = 0x04,
+    WriteSingleRegister = 0x06,
+    WriteMultipleRegisters = 0x10
+};
+
 class ModbusParser {
 public:
     static bool parse(
@@ -18,6 +25,10 @@ public:
         const std::string& destination_ip = "",
         std::uint16_t source_port = 0,
         std::uint16_t destination_port = 0
+    );
+
+    static bool is_supported_function(
+        std::uint8_t function_code
     );
 
 private:

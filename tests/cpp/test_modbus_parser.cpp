@@ -147,6 +147,15 @@ void test_invalid_protocol_id() {
     std::cout << "[PASS] Invalid protocol ID rejected\n";
 }
 
+void test_supported_function_codes() {
+    assert(ModbusParser::is_supported_function(0x03));
+    assert(ModbusParser::is_supported_function(0x04));
+    assert(ModbusParser::is_supported_function(0x06));
+    assert(ModbusParser::is_supported_function(0x10));
+
+    std::cout << "[PASS] Supported function codes recognized\n";
+}
+
 int main() {
     std::cout << "========================================\n";
     std::cout << " VoltGuard Modbus Parser Tests\n";
@@ -159,6 +168,7 @@ int main() {
     test_incomplete_packet();
     test_malformed_packet();
     test_invalid_protocol_id();
+    test_supported_function_codes();
 
     std::cout << "========================================\n";
     std::cout << " All parser tests passed.\n";
