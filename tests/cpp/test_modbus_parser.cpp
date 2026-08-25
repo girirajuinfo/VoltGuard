@@ -155,7 +155,106 @@ void test_supported_function_codes() {
 
     std::cout << "[PASS] Supported function codes recognized\n";
 }
+void test_unsupported_function_code() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x08, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x05, 0x00, 0x00, 0x00, 0x01
+    };
 
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(!result);
+    assert(!request.valid);
+    assert(
+        ModbusParser::get_last_error() ==
+        voltguard::ModbusParseError::UnsupportedFunctionCode
+    );
+
+    std::cout << "[PASS] Unsupported function code rejected\n";
+}
+
+void test_invalid_length() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x09, 0x00, 0x00, 0x00, 0x07,
+        0x01, 0x03, 0x00, 0x00, 0x00, 0x02
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(!result);
+    assert(!request.valid);
+    assert(
+        ModbusParser::get_last_error() ==
+        voltguard::ModbusParseError::InvalidLength
+    );
+
+    std::cout << "[PASS] Invalid length rejected\n";
+}
+
+void test_invalid_quantity() {
+    const std::vector<std::uint8_t> packet = {
+        0x00, 0x0A, 0x00, 0x00, 0x00, 0x06,
+        0x01, 0x03, 0x00, 0x00, 0x00, 0x00
+    };
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(!result);
+    assert(!request.valid);
+    assert(
+        ModbusParser::get_last_error() ==
+        voltguard::ModbusParseError::InvalidQuantity
+    );
+
+    std::cout << "[PASS] Invalid quantity rejected\n";
+}
+
+void test_invalid_byte_count() {
+    const std::vector<std::uint8_t> packet = {
+    0x00, 0x0B, 0x00, 0x00, 0x00, 0x09,
+    0x01, 0x10, 0x00, 0x30, 0x00, 0x02,
+    0x02, 0x00, 0x64
+};
+
+    ModbusRequest request;
+
+    const bool result = ModbusParser::parse(packet, request);
+
+    assert(!result);
+    assert(!request.valid);
+    assert(
+        ModbusParser::get_last_error() ==
+        voltguard::ModbusParseError::InvalidByteCount
+    );
+
+    std::cout << "[PASS] Invalid byte count rejected\n";
+}
+
+void test_error_message() {
+    assert(
+        std::string(
+            ModbusParser::error_message(
+                voltguard::ModbusParseError::PacketTooShort
+            )
+        ) == "Packet is too short"
+    );
+
+    assert(
+        std::string(
+            ModbusParser::error_message(
+                voltguard::ModbusParseError::UnsupportedFunctionCode
+            )
+        ) == "Unsupported Modbus function code"
+    );
+
+    std::cout << "[PASS] Parser error messages verified\n";
+}
 int main() {
     std::cout << "========================================\n";
     std::cout << " VoltGuard Modbus Parser Tests\n";
@@ -169,6 +268,12 @@ int main() {
     test_malformed_packet();
     test_invalid_protocol_id();
     test_supported_function_codes();
+    test_unsupported_function_code();
+    test_invalid_length();
+    test_invalid_quantity();
+    test_invalid_byte_count();
+    test_error_message();
+    
 
     std::cout << "========================================\n";
     std::cout << " All parser tests passed.\n";

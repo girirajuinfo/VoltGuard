@@ -16,6 +16,18 @@ enum class ModbusFunction : std::uint8_t {
     WriteMultipleRegisters = 0x10
 };
 
+enum class ModbusParseError {
+    None,
+    PacketTooShort,
+    InvalidProtocolId,
+    InvalidLength,
+    MissingFunctionCode,
+    UnsupportedFunctionCode,
+    InvalidPayload,
+    InvalidQuantity,
+    InvalidByteCount
+};
+
 class ModbusParser {
 public:
     static bool parse(
@@ -31,6 +43,12 @@ public:
         std::uint8_t function_code
     );
 
+    static ModbusParseError get_last_error();
+
+    static const char* error_message(
+        ModbusParseError error
+    );
+
 private:
     static std::uint16_t read_uint16(
         const std::vector<std::uint8_t>& data,
@@ -39,6 +57,14 @@ private:
 
     static bool validate_common_fields(
         const std::vector<std::uint8_t>& data
+    );
+
+    static ModbusParseError validate_packet(
+        const std::vector<std::uint8_t>& data
+    );
+
+    static void set_error(
+        ModbusParseError error
     );
 };
 
