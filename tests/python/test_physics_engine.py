@@ -155,6 +155,53 @@ class TestPhysicsEngine(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.engine.simulate(command)
 
+    def test_zero_valve_produces_zero_flow(self):
+        command = PipelineCommand(
+            valve_position_percent=0.0,
+            pump_enabled=True,
+            pump_speed_rpm=1500.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "SAFE")
+        self.assertEqual(state.flow_lpm, 0.0)
+
+    def test_full_valve_at_reference_speed(self):
+        command = PipelineCommand(
+            valve_position_percent=100.0,
+            pump_enabled=True,
+            pump_speed_rpm=3000.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "SAFE")
+        self.assertAlmostEqual(state.flow_lpm, 100.0)
+        self.assertAlmostEqual(state.pressure_bar, 10.0)
+
+    def test_zero_pump_speed_produces_zero_flow(self):
+        command = PipelineCommand(
+            valve_position_percent=100.0,
+            pump_enabled=True,
+            pump_speed_rpm=0.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "SAFE")
+        self.assertEqual(state.flow_lpm, 0.0)
+        self.assertAlmostEqual(state.pressure_bar, 1.0)
+
+    def test_nan_valve_position_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=float("nan"),
+            pump_enabled=True,
+            pump_speed_rpm=1500.0,
+        )
+
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
