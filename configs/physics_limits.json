@@ -1,0 +1,12 @@
+{
+    "mock_model": {
+        "description": "Simplified educational pipeline model for VoltGuard",
+        "warning": "These values are mock demonstration limits and are not real industrial safety limits."
+    },
+    "limits": {
+        "min_pressure_bar": 1.0,
+        "max_pressure_bar": 10.0,
+        "max_flow_lpm": 100.0,
+        "max_pump_speed_rpm": 3000.0
+    }
+}
