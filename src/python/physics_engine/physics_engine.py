@@ -1,14 +1,25 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 
 @dataclass
 class PipelineCommand:
-    """Command variables supplied to the mock pipeline."""
+    """
+    Command values supplied to the mock industrial pipeline.
+
+    valve_position_percent:
+        Valve opening from 0% to 100%.
+
+    pump_enabled:
+        True when the pump is running, False when stopped.
+
+    pump_speed_rpm:
+        Pump rotational speed in revolutions per minute (RPM).
+    """
 
     valve_position_percent: float
     pump_enabled: bool
@@ -17,7 +28,21 @@ class PipelineCommand:
 
 @dataclass
 class PipelineState:
-    """Predicted physical state of the mock pipeline."""
+    """
+    Predicted physical state of the mock pipeline.
+
+    flow_lpm:
+        Predicted flow rate in litres per minute.
+
+    pressure_bar:
+        Predicted pressure in bar.
+
+    status:
+        Either SAFE or UNSAFE.
+
+    violations:
+        List of safety-limit violations.
+    """
 
     valve_position_percent: float
     pump_enabled: bool
@@ -27,46 +52,74 @@ class PipelineState:
     pressure_bar: float
 
     status: str
-    violations: List[str] = field(default_factory=list)
+    violations: list[str] = field(default_factory=list)
 
 
 class PhysicsEngine:
     """
     Simplified educational physics engine for VoltGuard.
 
-    This is NOT a real industrial process model.
+    IMPORTANT:
+        This is a mock/educational model.
+        It is NOT a real industrial process model.
 
-    The model uses simple relationships:
+    Simplified relationships:
 
-        Flow = pump contribution × valve opening
+        Flow =
+            pump speed factor
+            × valve opening factor
+            × reference flow
 
-        Pressure = base pressure + pump contribution
+        Pressure =
+            base pressure
+            + pump speed factor × pressure rise
 
-    The model parameters and safety limits are loaded
-    from a JSON configuration file.
+    Model parameters and safety limits are loaded
+    from configs/physics_limits.json.
     """
 
     def __init__(self, config_path: str | Path):
-        self.config_path = Path(config_path)
-        self.limits = self._load_limits()
-
-    def _load_limits(self) -> dict:
         """
-        Load mock model parameters and safety limits
-        from the JSON configuration.
+        Create a physics engine using the supplied JSON configuration.
+        """
+
+        self.config_path = Path(config_path)
+
+        if not self.config_path.is_file():
+            raise FileNotFoundError(
+                f"Physics configuration not found: {self.config_path}"
+            )
+
+        self.model, self.limits = self._load_configuration()
+
+    def _load_configuration(self) -> tuple[dict, dict]:
+        """
+        Load model parameters and safety limits from JSON.
         """
 
         with self.config_path.open("r", encoding="utf-8") as file:
             config = json.load(file)
 
-        self.model = config["model"]
+        if "model" not in config:
+            raise ValueError(
+                "Physics configuration is missing the 'model' section"
+            )
 
-        return config["limits"]
+        if "limits" not in config:
+            raise ValueError(
+                "Physics configuration is missing the 'limits' section"
+            )
+
+        return config["model"], config["limits"]
 
     def simulate(self, command: PipelineCommand) -> PipelineState:
         """
-        Predict the physical state of the mock pipeline
-        for a supplied command.
+        Calculate the predicted physical state for a command.
+
+        The command is validated first.
+        The resulting flow and pressure are then calculated.
+        Finally, the calculated state is checked against
+        the configured safety limits.
         """
 
         self._validate_command(command)
@@ -76,25 +129,33 @@ class PhysicsEngine:
             pressure_bar = self.model["base_pressure_bar"]
 
         else:
-            valve_factor = command.valve_position_percent / 100.0
+            valve_factor = (
+                command.valve_position_percent / 100.0
+            )
 
-            flow_lpm = (
+            pump_speed_factor = (
                 command.pump_speed_rpm
                 / self.model["reference_pump_speed_rpm"]
-            ) * valve_factor * self.model["reference_flow_lpm"]
+            )
+
+            flow_lpm = (
+                pump_speed_factor
+                * valve_factor
+                * self.model["reference_flow_lpm"]
+            )
 
             pressure_bar = (
                 self.model["base_pressure_bar"]
                 + (
-                    command.pump_speed_rpm
-                    / self.model["reference_pump_speed_rpm"]
-                ) * self.model["pressure_rise_bar"]
+                    pump_speed_factor
+                    * self.model["pressure_rise_bar"]
+                )
             )
 
         violations = self._evaluate_safety(
-            command,
-            flow_lpm,
-            pressure_bar,
+            command=command,
+            flow_lpm=flow_lpm,
+            pressure_bar=pressure_bar,
         )
 
         status = "UNSAFE" if violations else "SAFE"
@@ -109,14 +170,35 @@ class PhysicsEngine:
             violations=violations,
         )
 
-    def _validate_command(self, command: PipelineCommand) -> None:
+    def _validate_command(
+        self,
+        command: PipelineCommand,
+    ) -> None:
         """
-        Reject physically invalid command values.
+        Validate command values before running the simulation.
+
+        Invalid or physically nonsensical input is rejected
+        with ValueError.
         """
+
+        if not isinstance(command.pump_enabled, bool):
+            raise ValueError(
+                "Pump enabled state must be True or False"
+            )
+
+        if not math.isfinite(command.valve_position_percent):
+            raise ValueError(
+                "Valve position must be a finite number"
+            )
 
         if not 0.0 <= command.valve_position_percent <= 100.0:
             raise ValueError(
                 "Valve position must be between 0 and 100 percent"
+            )
+
+        if not math.isfinite(command.pump_speed_rpm):
+            raise ValueError(
+                "Pump speed must be a finite number"
             )
 
         if command.pump_speed_rpm < 0.0:
@@ -124,9 +206,12 @@ class PhysicsEngine:
                 "Pump speed cannot be negative"
             )
 
-        if not isinstance(command.pump_enabled, bool):
+        if (
+            not command.pump_enabled
+            and command.pump_speed_rpm != 0.0
+        ):
             raise ValueError(
-                "Pump enabled state must be True or False"
+                "Disabled pump must have zero RPM"
             )
 
     def _evaluate_safety(
@@ -134,14 +219,20 @@ class PhysicsEngine:
         command: PipelineCommand,
         flow_lpm: float,
         pressure_bar: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """
-        Return all safety-limit violations.
+        Compare the predicted state with configured safety limits.
+
+        Returns a list of all detected safety violations.
+        An empty list means the state is considered SAFE.
         """
 
-        violations: List[str] = []
+        violations: list[str] = []
 
-        if command.pump_speed_rpm > self.limits["max_pump_speed_rpm"]:
+        if (
+            command.pump_speed_rpm
+            > self.limits["max_pump_speed_rpm"]
+        ):
             violations.append(
                 "Pump speed exceeds maximum safe limit"
             )

@@ -125,6 +125,36 @@ class TestPhysicsEngine(unittest.TestCase):
         self.assertEqual(state.flow_lpm, 0.0)
         self.assertEqual(state.pressure_bar, 1.0)
 
+    def test_nan_pump_speed_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=50.0,
+            pump_enabled=True,
+            pump_speed_rpm=float("nan"),
+        )
+
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
+
+    def test_infinite_pump_speed_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=50.0,
+            pump_enabled=True,
+            pump_speed_rpm=float("inf"),
+        )
+
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
+
+    def test_disabled_pump_with_nonzero_speed_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=50.0,
+            pump_enabled=False,
+            pump_speed_rpm=1000.0,
+        )
+
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
