@@ -42,8 +42,8 @@ class PhysicsEngine:
 
         Pressure = base pressure + pump contribution
 
-    These relationships are intentionally simple so the model
-    can be understood and tested easily.
+    The model parameters and safety limits are loaded
+    from a JSON configuration file.
     """
 
     def __init__(self, config_path: str | Path):
@@ -51,33 +51,44 @@ class PhysicsEngine:
         self.limits = self._load_limits()
 
     def _load_limits(self) -> dict:
-        """Load mock safety limits from the JSON configuration."""
+        """
+        Load mock model parameters and safety limits
+        from the JSON configuration.
+        """
 
         with self.config_path.open("r", encoding="utf-8") as file:
             config = json.load(file)
+
+        self.model = config["model"]
 
         return config["limits"]
 
     def simulate(self, command: PipelineCommand) -> PipelineState:
         """
-        Predict the pipeline state for a supplied command.
+        Predict the physical state of the mock pipeline
+        for a supplied command.
         """
 
         self._validate_command(command)
 
         if not command.pump_enabled:
             flow_lpm = 0.0
-            pressure_bar = 1.0
+            pressure_bar = self.model["base_pressure_bar"]
+
         else:
             valve_factor = command.valve_position_percent / 100.0
 
             flow_lpm = (
-                command.pump_speed_rpm / 3000.0
-            ) * valve_factor * 100.0
+                command.pump_speed_rpm
+                / self.model["reference_pump_speed_rpm"]
+            ) * valve_factor * self.model["reference_flow_lpm"]
 
             pressure_bar = (
-                1.0
-                + (command.pump_speed_rpm / 3000.0) * 9.0
+                self.model["base_pressure_bar"]
+                + (
+                    command.pump_speed_rpm
+                    / self.model["reference_pump_speed_rpm"]
+                ) * self.model["pressure_rise_bar"]
             )
 
         violations = self._evaluate_safety(
@@ -99,7 +110,9 @@ class PhysicsEngine:
         )
 
     def _validate_command(self, command: PipelineCommand) -> None:
-        """Reject physically invalid command values."""
+        """
+        Reject physically invalid command values.
+        """
 
         if not 0.0 <= command.valve_position_percent <= 100.0:
             raise ValueError(
@@ -111,13 +124,20 @@ class PhysicsEngine:
                 "Pump speed cannot be negative"
             )
 
+        if not isinstance(command.pump_enabled, bool):
+            raise ValueError(
+                "Pump enabled state must be True or False"
+            )
+
     def _evaluate_safety(
         self,
         command: PipelineCommand,
         flow_lpm: float,
         pressure_bar: float,
     ) -> List[str]:
-        """Return all safety-limit violations."""
+        """
+        Return all safety-limit violations.
+        """
 
         violations: List[str] = []
 
