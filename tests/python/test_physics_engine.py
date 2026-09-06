@@ -202,6 +202,84 @@ class TestPhysicsEngine(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.engine.simulate(command)
+    def test_negative_valve_position_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=-1.0,
+            pump_enabled=True,
+            pump_speed_rpm=1500.0,
+        )
 
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
+
+    def test_valve_position_lower_boundary_is_safe(self):
+        command = PipelineCommand(
+            valve_position_percent=0.0,
+            pump_enabled=True,
+            pump_speed_rpm=1500.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "SAFE")
+        self.assertEqual(state.flow_lpm, 0.0)
+
+    def test_valve_position_upper_boundary_is_safe(self):
+        command = PipelineCommand(
+            valve_position_percent=100.0,
+            pump_enabled=True,
+            pump_speed_rpm=3000.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "SAFE")
+        self.assertAlmostEqual(state.flow_lpm, 100.0)
+        self.assertAlmostEqual(state.pressure_bar, 10.0)
+
+    def test_wrong_pump_enabled_type_is_rejected(self):
+        command = PipelineCommand(
+            valve_position_percent=50.0,
+            pump_enabled=1,
+            pump_speed_rpm=1500.0,
+        )
+
+        with self.assertRaises(ValueError):
+            self.engine.simulate(command)
+
+    def test_multiple_physics_violations_are_reported(self):
+        command = PipelineCommand(
+            valve_position_percent=100.0,
+            pump_enabled=True,
+            pump_speed_rpm=3500.0,
+        )
+
+        state = self.engine.simulate(command)
+
+        self.assertEqual(state.status, "UNSAFE")
+        self.assertGreaterEqual(len(state.violations), 2)
+        self.assertIn(
+            "Pump speed exceeds maximum safe limit",
+            state.violations,
+        )
+        self.assertIn(
+            "Predicted pressure exceeds maximum safe limit",
+            state.violations,
+        )
+
+    def test_repeated_evaluation_is_deterministic(self):
+        command = PipelineCommand(
+            valve_position_percent=50.0,
+            pump_enabled=True,
+            pump_speed_rpm=1500.0,
+        )
+
+        first = self.engine.simulate(command)
+        second = self.engine.simulate(command)
+
+        self.assertEqual(first.status, second.status)
+        self.assertEqual(first.flow_lpm, second.flow_lpm)
+        self.assertEqual(first.pressure_bar, second.pressure_bar)
+        self.assertEqual(first.violations, second.violations)
 if __name__ == "__main__":
     unittest.main(verbosity=2)
