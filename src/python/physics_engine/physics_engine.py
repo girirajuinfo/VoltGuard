@@ -94,7 +94,7 @@ class PhysicsEngine:
 
     def _load_configuration(self) -> tuple[dict, dict]:
         """
-        Load model parameters and safety limits from JSON.
+        Load and validate model parameters and safety limits from JSON.
         """
 
         with self.config_path.open("r", encoding="utf-8") as file:
@@ -110,7 +110,99 @@ class PhysicsEngine:
                 "Physics configuration is missing the 'limits' section"
             )
 
-        return config["model"], config["limits"]
+        model = config["model"]
+        limits = config["limits"]
+
+        if not isinstance(model, dict):
+            raise ValueError(
+                "Physics configuration 'model' must be an object"
+            )
+
+        if not isinstance(limits, dict):
+            raise ValueError(
+                "Physics configuration 'limits' must be an object"
+            )
+
+        required_model_fields = {
+            "reference_pump_speed_rpm",
+            "reference_flow_lpm",
+            "base_pressure_bar",
+            "pressure_rise_bar",
+        }
+
+        required_limit_fields = {
+            "min_pressure_bar",
+            "max_pressure_bar",
+            "max_flow_lpm",
+            "max_pump_speed_rpm",
+        }
+
+        missing_model_fields = required_model_fields - set(model)
+
+        if missing_model_fields:
+            raise ValueError(
+                "Physics configuration is missing model fields: "
+                + ", ".join(sorted(missing_model_fields))
+            )
+
+        missing_limit_fields = required_limit_fields - set(limits)
+
+        if missing_limit_fields:
+            raise ValueError(
+                "Physics configuration is missing limit fields: "
+                + ", ".join(sorted(missing_limit_fields))
+            )
+
+        for field_name in required_model_fields:
+            value = model[field_name]
+
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError(
+                    f"Physics model field '{field_name}' must be a finite number"
+                )
+
+        for field_name in required_limit_fields:
+            value = limits[field_name]
+
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError(
+                    f"Physics limit '{field_name}' must be a finite number"
+                )
+
+        if model["reference_pump_speed_rpm"] <= 0:
+            raise ValueError(
+                "Reference pump speed must be greater than zero"
+            )
+
+        if model["reference_flow_lpm"] < 0:
+            raise ValueError(
+                "Reference flow cannot be negative"
+            )
+
+        if limits["min_pressure_bar"] > limits["max_pressure_bar"]:
+            raise ValueError(
+                "Minimum pressure limit cannot exceed maximum pressure limit"
+            )
+
+        if limits["max_flow_lpm"] < 0:
+            raise ValueError(
+                "Maximum flow limit cannot be negative"
+            )
+
+        if limits["max_pump_speed_rpm"] < 0:
+            raise ValueError(
+                "Maximum pump speed limit cannot be negative"
+            )
+
+        return model, limits
 
     def simulate(self, command: PipelineCommand) -> PipelineState:
         """

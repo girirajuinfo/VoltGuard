@@ -1,5 +1,7 @@
 from pathlib import Path
+import json
 import sys
+import tempfile
 import unittest
 
 
@@ -202,6 +204,7 @@ class TestPhysicsEngine(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.engine.simulate(command)
+
     def test_negative_valve_position_is_rejected(self):
         command = PipelineCommand(
             valve_position_percent=-1.0,
@@ -281,5 +284,86 @@ class TestPhysicsEngine(unittest.TestCase):
         self.assertEqual(first.flow_lpm, second.flow_lpm)
         self.assertEqual(first.pressure_bar, second.pressure_bar)
         self.assertEqual(first.violations, second.violations)
+
+    def test_missing_configuration_file_is_rejected(self):
+        missing_config = CONFIG_PATH.parent / "does_not_exist.json"
+
+        with self.assertRaises(FileNotFoundError):
+            PhysicsEngine(missing_config)
+
+    def test_incomplete_configuration_is_rejected(self):
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            delete=False,
+        ) as file:
+            json.dump({"model": {}}, file)
+            config_path = Path(file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                PhysicsEngine(config_path)
+        finally:
+            config_path.unlink(missing_ok=True)
+
+    def test_missing_model_field_is_rejected(self):
+        config = {
+            "model": {
+                "reference_pump_speed_rpm": 3000.0,
+                "reference_flow_lpm": 100.0,
+                "base_pressure_bar": 1.0,
+            },
+            "limits": {
+                "min_pressure_bar": 1.0,
+                "max_pressure_bar": 10.0,
+                "max_flow_lpm": 100.0,
+                "max_pump_speed_rpm": 3000.0,
+            },
+        }
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            delete=False,
+        ) as file:
+            json.dump(config, file)
+            config_path = Path(file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                PhysicsEngine(config_path)
+        finally:
+            config_path.unlink(missing_ok=True)
+
+    def test_missing_limit_field_is_rejected(self):
+        config = {
+            "model": {
+                "reference_pump_speed_rpm": 3000.0,
+                "reference_flow_lpm": 100.0,
+                "base_pressure_bar": 1.0,
+                "pressure_rise_bar": 9.0,
+            },
+            "limits": {
+                "min_pressure_bar": 1.0,
+                "max_pressure_bar": 10.0,
+                "max_flow_lpm": 100.0,
+            },
+        }
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            delete=False,
+        ) as file:
+            json.dump(config, file)
+            config_path = Path(file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                PhysicsEngine(config_path)
+        finally:
+            config_path.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
