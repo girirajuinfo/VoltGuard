@@ -40,6 +40,10 @@ qrc_*
 # IDE
 .vscode/
 .idea/
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+VoltGuardDashboard
 
 # OS
 .DS_Store
