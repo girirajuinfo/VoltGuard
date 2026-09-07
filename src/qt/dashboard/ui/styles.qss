@@ -1,0 +1,210 @@
+* {
+    font-family: "DejaVu Sans";
+    font-size: 10pt;
+}
+
+QMainWindow, QWidget {
+    background: #0c1117;
+    color: #d7e1e8;
+}
+
+QScrollArea {
+    border: none;
+}
+
+#header {
+    background: #111c25;
+    border: 1px solid #263847;
+    border-left: 4px solid #35c18b;
+}
+
+#appTitle {
+    color: #f1f6f8;
+    font-size: 25pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+#appSubtitle {
+    color: #8396a3;
+    font-size: 10pt;
+}
+
+#systemBadge {
+    color: #8cf0bd;
+    background: #153529;
+    border: 1px solid #2d9c70;
+    padding: 8px 13px;
+    font-weight: 700;
+}
+
+#statusBar {
+    background: #101820;
+    border: 1px solid #253542;
+}
+
+#statusName, #metricName {
+    color: #8295a2;
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+#statusDot {
+    color: #35c18b;
+    font-size: 11pt;
+}
+
+#card {
+    background: #111a22;
+    border: 1px solid #273845;
+}
+
+#cardTitle {
+    color: #d8e5ea;
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #263744;
+}
+
+QLabel {
+    color: #b9c8cf;
+}
+
+QFormLayout QLabel {
+    color: #8397a4;
+}
+
+QSpinBox, QComboBox {
+    background: #0b1218;
+    border: 1px solid #304552;
+    color: #e5edf0;
+    padding: 7px 8px;
+    min-height: 26px;
+}
+
+QSpinBox:focus, QComboBox:focus {
+    border: 1px solid #46c99a;
+}
+
+QComboBox QAbstractItemView {
+    background: #111a22;
+    color: #e5edf0;
+    selection-background-color: #215b4b;
+}
+
+QPushButton {
+    border: 1px solid #39505d;
+    padding: 8px 12px;
+    font-weight: 700;
+    min-height: 20px;
+}
+
+#primaryButton {
+    background: #2ba777;
+    border-color: #49d59e;
+    color: #07130e;
+}
+
+#primaryButton:hover {
+    background: #42c690;
+}
+
+#primaryButton:disabled {
+    background: #29463e;
+    color: #7f9b90;
+}
+
+#secondaryButton {
+    background: #182630;
+    color: #b8cbd3;
+}
+
+#secondaryButton:hover {
+    background: #233743;
+}
+
+#warningButton {
+    background: #503522;
+    border-color: #b57942;
+    color: #f2c18d;
+}
+
+#warningButton:hover {
+    background: #70472b;
+}
+
+#decisionValue {
+    font-size: 27pt;
+    font-weight: 800;
+    color: #aab9c0;
+}
+
+#decisionValue[state="safe"], #metricValue[state="safe"], QLabel[state="safe"] {
+    color: #64e5a7;
+}
+
+#decisionValue[state="danger"], #metricValue[state="danger"], QLabel[state="danger"] {
+    color: #ff766e;
+}
+
+#metricValue {
+    color: #e7f0f2;
+    font-size: 16pt;
+    font-weight: 700;
+}
+
+#reasonValue {
+    color: #a9bac3;
+    padding-top: 7px;
+}
+
+#violationsView, #eventLog, #parsedCommand {
+    background: #0a1117;
+    border: 1px solid #263a46;
+    color: #b8c8cf;
+    padding: 10px;
+}
+
+#violationsView {
+    color: #ff9a82;
+    min-height: 55px;
+}
+
+#parsedCommand {
+    line-height: 1.5;
+}
+
+QTableWidget {
+    background: #0a1117;
+    alternate-background-color: #101a22;
+    border: 1px solid #263a46;
+    gridline-color: #1d2d37;
+    selection-background-color: #205745;
+    selection-color: #e9fff4;
+}
+
+QHeaderView::section {
+    background: #17252e;
+    color: #91a9b3;
+    border: none;
+    border-right: 1px solid #263a46;
+    padding: 8px;
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+QScrollBar:vertical {
+    background: #0b1218;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #304552;
+    min-height: 25px;
+}
+
+QMessageBox {
+    background: #111a22;
+}
