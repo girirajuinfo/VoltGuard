@@ -23,6 +23,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake-build-*/
 Makefile
+tests/cpp/test_modbus_parser
+src/cpp/packet_interceptor/voltguard_parser
 
 # Rust
 target/
@@ -38,6 +40,10 @@ qrc_*
 # IDE
 .vscode/
 .idea/
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+VoltGuardDashboard
 
 # OS
 .DS_Store

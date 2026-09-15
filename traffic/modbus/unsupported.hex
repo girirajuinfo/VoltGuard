@@ -1,0 +1,18 @@
+# VoltGuard Day 2 - Unsupported Modbus Function Code
+#
+# This packet is local test data only.
+# It is NOT transmitted over a network.
+#
+# Function Code: 05
+# Function Code 05 is intentionally unsupported by the
+# current VoltGuard parser.
+#
+# Transaction ID: 0005
+# Protocol ID:   0000
+# Length:        0006
+# Unit ID:       01
+# Function Code: 05
+# Address:       0000
+# Value:         0001
+
+00 05 00 00 00 06 01 05 00 00 00 01
