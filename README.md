@@ -836,6 +836,3 @@ https://github.com/girirajuinfo
 # License
 
 This project is licensed under the terms specified in the `LICENSE` file.
-```
-
-**This version does not mention the 10-day implementation at all.** It presents VoltGuard correctly as the **4-week Infotact project**, with the four official development phases and the actual architecture.
